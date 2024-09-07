@@ -1,0 +1,41 @@
+name: Build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+
+    - name: Install Nix
+      uses: cachix/install-nix-action@v27
+      with:
+        github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Build and publish image to GitHub Container Registry
+      shell: bash
+      run: |
+        # Get image details
+        IMAGE_NAME="$(nix eval --raw .#packages.x86_64-linux.docker.imageName)"
+        IMAGE_TAG="$(nix eval --raw .#packages.x86_64-linux.docker.imageTag)"
+
+        # Build and load the image
+        nix build .#docker
+        docker load < ./result
+
+        # Push image to ghcr.io
+        docker push "${IMAGE_NAME}":"${IMAGE_TAG}"
