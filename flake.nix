@@ -10,8 +10,8 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
-      in {
-        packages.default = pkgs.stdenv.mkDerivation {
+      in rec {
+        sample-nix = pkgs.stdenv.mkDerivation {
           name = "sample-nix";
           src = ./.;
 
@@ -27,6 +27,14 @@
             mkdir -p $out/bin
             cp sample-nix $out/bin/
           '';
+        };
+
+        packages.default = sample-nix;
+
+        packages.docker = pkgs.dockerTools.buildLayeredImage {
+          name = "sphericalkat/sample-nix";
+          tag = "latest";
+          config.Cmd = [ "${sample-nix}/bin/sample-nix" ];
         };
       }
     );
