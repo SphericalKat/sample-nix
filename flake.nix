@@ -32,7 +32,7 @@
         packages.default = sample-nix;
 
         packages.docker = pkgs.dockerTools.buildLayeredImage {
-          name = "sphericalkat/sample-nix";
+          name = "ghcr.io/sphericalkat/sample-nix";
           tag = "latest";
           config.Cmd = [ "${sample-nix}/bin/sample-nix" ];
         };
